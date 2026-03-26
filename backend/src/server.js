@@ -1,9 +1,12 @@
 import { Server } from "socket.io";
+import express from 'express';
+import mongoose from 'mongoose';
+import path from 'path';
+import cors from 'cors';
+import http from 'http';
+import dotenv from 'dotenv';
 
-const express = require('express');
-const mongoose = require('mongoose');
-const path = require('path');
-const cors = require('cors');
+dotenv.config();
 
 const app = express();
 
@@ -12,7 +15,7 @@ app.use(cors({
   credentials: true
 }));
 
-const server = require('http').Server(app);
+const server = http.Server(app);
 
 const io = new Server(server, {
   cors: {
@@ -28,8 +31,6 @@ io.on('connection', socket => {
   });
 });
 
-require('dotenv').config();
-
 mongoose.connect(process.env.MONGO_URI);
 
 mongoose.connection.on("connected", () => {
@@ -43,8 +44,16 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ⚠️ __dirname não existe em ESM
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use('/files', express.static(path.resolve(__dirname, '..', 'tmp')));
 
-app.use(require('./routes'));
+import routes from './routes.js';
+app.use(routes);
 
 server.listen(process.env.PORT || 3333);
