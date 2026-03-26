@@ -9,9 +9,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
+app.use(express.static('public'));
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://cloudbox-c58m4zlrh-cientistaphps-projects.vercel.app"
+];
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 
@@ -19,7 +31,10 @@ const server = http.Server(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://cloudbox-c58m4zlrh-cientistaphps-projects.vercel.app"
+    ],
     methods: ["GET", "POST"],
     credentials: true
   }
