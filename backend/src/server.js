@@ -1,3 +1,5 @@
+import { Server } from "socket.io";
+
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -5,17 +7,26 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 
-const server =require('http').Server(app);
-const io = require('socket.io')(server);
+const server = require('http').Server(app);
 
-io.on('connection',socket=>{
-    socket.on('connectRoom', box =>{
-        socket.join(box);
-     })
-         //console.log('ok');
- })
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+io.on('connection', socket => {
+  socket.on('connectRoom', box => {
+    socket.join(box);
+  });
+});
 
 require('dotenv').config();
 
@@ -25,21 +36,15 @@ mongoose.connection.on("connected", () => {
   console.log("MongoDB conectado OK");
 });
 
-
-
-//app.get('/teste', (req,res)=>{
-//   return res.send('Hello World');
-//})
-
-app.use((req,res,next)=>{
-      req.io=io;
-      return next();
+app.use((req, res, next) => {
+  req.io = io;
+  return next();
 });
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-app.use('/files', express.static(path.resolve(__dirname, '..','tmp')));
+app.use(express.urlencoded({ extended: true }));
+app.use('/files', express.static(path.resolve(__dirname, '..', 'tmp')));
 
 app.use(require('./routes'));
 
-server.listen(process.env.PORT  || 3333);
+server.listen(process.env.PORT || 3333);
