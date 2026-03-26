@@ -3,13 +3,19 @@ import api from "../../services/api";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Dropzone from 'react-dropzone';
-import socket from 'socket.io-client';
+import { io } from "socket.io-client";
+
 
 import { MdInsertDriveFile } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 
 import logo from "../../assets/logo.svg";
 import './styles.css';
+
+const socket = io("https://cloudbox-production-d43f.up.railway.app", {
+  transports: ["websocket"],
+});
+
 
 class Box extends Component { 
   state = { box: {} };
@@ -24,15 +30,19 @@ class Box extends Component {
   }
  
   subscribeToNewFiles = () => {
-      const box = this.props.params.id;
-      const io = socket('https://cloudbox-production-d43f.up.railway.app/');
+  const box = this.props.params.id;
 
-      io.emit('connectRoom', box);
+  socket.emit('connectRoom', box);
 
-      io.on(  'file', data=> {
-       this.setState({ box: { ... this.state.box, files: [data, ... this.state.box.files, ]} });
-       });    
-   }
+  socket.on('file', data => {
+               this.setState({
+                  box: {
+                     ...this.state.box,
+                   files: [data, ...(this.state.box.files || [])],
+                  },
+              });
+       });
+};
 
   handleUpload = (files)=>{
             files.forEach(file => {
