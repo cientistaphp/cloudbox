@@ -13,16 +13,22 @@ app.use(express.static('public'));
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://cloudbox-c58m4zlrh-cientistaphps-projects.vercel.app"
+  "https://cloudbox-c58m4zlrh-cientistaphps-projects.vercel.app",
+  "https://cloudbox-delta.vercel.app"
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS bloqueado"));
+    if (!origin) return callback(null, true);
+
+    if (
+      origin.includes("vercel.app") ||
+      origin.includes("localhost")
+    ) {
+      return callback(null, true);
     }
+
+    return callback(new Error("CORS bloqueado"));
   },
   credentials: true
 }));
